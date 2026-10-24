@@ -1,0 +1,89 @@
+# ==============================================================================
+# GitLab CI/CD Pipeline Configuration for LogiSphere
+# ==============================================================================
+# Architecture: Spring Boot Microservices (Java 21) + React (Vite / Node 20)
+# ==============================================================================
+
+stages:
+  - test
+  - build
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN"
+
+cache:
+  paths:
+    - .m2/repository/
+    - frontend/node_modules/
+
+# ------------------------------------------------------------------------------
+# Backend Service Builds & Unit Tests
+# ------------------------------------------------------------------------------
+.backend_template: &backend_definition
+  image: maven:3.9-eclipse-temurin-21
+  stage: test
+  script:
+    - cd $SERVICE_DIR
+    - mvn test -B
+  only:
+    - main
+    - merge_requests
+
+test:eureka-server:
+  <<: *backend_definition
+  variables:
+    SERVICE_DIR: backend/eureka-server
+
+test:api-gateway:
+  <<: *backend_definition
+  variables:
+    SERVICE_DIR: backend/api-gateway
+
+test:auth-service:
+  <<: *backend_definition
+  variables:
+    SERVICE_DIR: backend/auth-service
+
+test:product-service:
+  <<: *backend_definition
+  variables:
+    SERVICE_DIR: backend/product-service
+
+test:inventory-service:
+  <<: *backend_definition
+  variables:
+    SERVICE_DIR: backend/inventory-service
+
+test:order-service:
+  <<: *backend_definition
+  variables:
+    SERVICE_DIR: backend/order-service
+
+test:shipment-service:
+  <<: *backend_definition
+  variables:
+    SERVICE_DIR: backend/shipment-service
+
+test:delivery-service:
+  <<: *backend_definition
+  variables:
+    SERVICE_DIR: backend/delivery-service
+
+# ------------------------------------------------------------------------------
+# Frontend Lint & Production Build
+# ------------------------------------------------------------------------------
+frontend:build:
+  image: node:20-alpine
+  stage: build
+  before_script:
+    - cd frontend
+    - npm ci
+  script:
+    - npm run build
+  artifacts:
+    paths:
+      - frontend/dist/
+    expire_in: 1 week
+  only:
+    - main
+    - merge_requests

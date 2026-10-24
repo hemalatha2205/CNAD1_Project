@@ -1,0 +1,63 @@
+# Secrets and environment variables
+.env
+.env.*
+!.env.example
+**/application-local.properties
+**/application-secret.properties
+**/secrets/
+
+# Java and Maven build output
+**/target/
+*.class
+
+# Frontend dependencies and build output
+**/node_modules/
+**/dist/
+
+# Logs and temporary files
+*.log
+logs/
+tmp/
+temp/
+
+# IDE and operating system files
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Python environments and caches
+**/.venv/
+**/venv/
+**/__pycache__/
+
+# Database dumps and local data
+*.sql.gz
+*.dump
+*.bak
+
+# Certificates and private keys
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Local uploads and sensitive documents
+uploads/
+private-documents/
+kyc-documents/
+
+# Local scratch files and extracted dependencies
+/scratch/
+
+# Local test payloads and scripts
+/payload.json
+/test-kafka.ps1
+/test-kafka-2.ps1
+*.ps1
+
+# Generated build files
+**/target/
+**/node_modules/
+**/dist/

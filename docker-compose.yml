@@ -1,0 +1,201 @@
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.4
+    container_name: logisphere-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER_CLIENT_PORT:-2181}
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - logisphere-net
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.4
+    container_name: logisphere-kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - logisphere-net
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  mysql-db:
+    image: mysql:8.0
+    container_name: logisphere-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - logisphere-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  eureka-server:
+    build: ./backend/eureka-server
+    container_name: logisphere-eureka
+    ports:
+      - "${EUREKA_PORT:-8761}:8761"
+    networks:
+      - logisphere-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api-gateway:
+    build: ./backend/api-gateway
+    container_name: logisphere-gateway
+    ports:
+      - "${GATEWAY_PORT:-8080}:8080"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:-http://eureka-server:8761/eureka/}
+    networks:
+      - logisphere-net
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+
+  auth-service:
+    build: ./backend/auth-service
+    container_name: logisphere-auth
+    environment:
+      - SPRING_DATASOURCE_URL=${AUTH_DATASOURCE_URL:-jdbc:mysql://mysql-db:3306/logisphere_auth_db}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-root}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-root}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set in .env}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:-http://eureka-server:8761/eureka/}
+      - SERVICE_DELIVERY_URL=${SERVICE_DELIVERY_URL:-http://delivery-service:8087}
+    networks:
+      - logisphere-net
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+
+  product-service:
+    build: ./backend/product-service
+    container_name: logisphere-product
+    environment:
+      - SPRING_DATASOURCE_URL=${PRODUCT_DATASOURCE_URL:-jdbc:mysql://mysql-db:3306/logisphere_product_db}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-root}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-root}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set in .env}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:-http://eureka-server:8761/eureka/}
+      - SERVICE_AUTH_URL=${SERVICE_AUTH_URL:-http://auth-service:8082}
+    networks:
+      - logisphere-net
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+
+  inventory-service:
+    build: ./backend/inventory-service
+    container_name: logisphere-inventory
+    environment:
+      - SPRING_DATASOURCE_URL=${INVENTORY_DATASOURCE_URL:-jdbc:mysql://mysql-db:3306/logisphere_inventory_db}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-root}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-root}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set in .env}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:-http://eureka-server:8761/eureka/}
+      - SERVICE_PRODUCT_URL=${SERVICE_PRODUCT_URL:-http://product-service:8083}
+    networks:
+      - logisphere-net
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+
+  order-service:
+    build: ./backend/order-service
+    container_name: logisphere-order
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
+      - SPRING_DATASOURCE_URL=${ORDER_DATASOURCE_URL:-jdbc:mysql://mysql-db:3306/logisphere_order_db}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-root}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-root}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set in .env}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:-http://eureka-server:8761/eureka/}
+      - SERVICE_INVENTORY_URL=${SERVICE_INVENTORY_URL:-http://inventory-service:8084}
+      - SERVICE_SHIPMENT_URL=${SERVICE_SHIPMENT_URL:-http://shipment-service:8086}
+      - SERVICE_PRODUCT_URL=${SERVICE_PRODUCT_URL:-http://product-service:8083}
+    networks:
+      - logisphere-net
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+
+  shipment-service:
+    build: ./backend/shipment-service
+    container_name: logisphere-shipment
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
+      - SPRING_DATASOURCE_URL=${SHIPMENT_DATASOURCE_URL:-jdbc:mysql://mysql-db:3306/logisphere_shipment_db}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-root}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-root}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set in .env}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:-http://eureka-server:8761/eureka/}
+      - SERVICE_DELIVERY_URL=${SERVICE_DELIVERY_URL:-http://delivery-service:8087}
+    networks:
+      - logisphere-net
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+
+  delivery-service:
+    build: ./backend/delivery-service
+    container_name: logisphere-delivery
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
+      - SPRING_DATASOURCE_URL=${DELIVERY_DATASOURCE_URL:-jdbc:mysql://mysql-db:3306/logisphere_delivery_db}
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME:-root}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-root}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set in .env}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:-http://eureka-server:8761/eureka/}
+    networks:
+      - logisphere-net
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    container_name: logisphere-frontend
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    networks:
+      - logisphere-net
+    depends_on:
+      api-gateway:
+        condition: service_started
+
+networks:
+  logisphere-net:
+    driver: bridge
+
+volumes:
+  mysql_data:
