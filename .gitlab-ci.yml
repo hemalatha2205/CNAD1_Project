@@ -15,10 +15,10 @@ cache:
   stage: test
   services:
     - name: mysql:8.0
-      alias: mysql
+      variables:
+        MYSQL_ROOT_PASSWORD: ci_root_password
+        MYSQL_ROOT_HOST: "%"
   variables:
-    MYSQL_ROOT_PASSWORD: ci_root_password
-    MYSQL_ROOT_HOST: "%"
     SPRING_DATASOURCE_USERNAME: root
     SPRING_DATASOURCE_PASSWORD: ci_root_password
   before_script:
