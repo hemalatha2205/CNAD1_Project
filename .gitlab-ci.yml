@@ -1,33 +1,52 @@
-# ==============================================================================
-# GitLab CI/CD Pipeline Configuration for LogiSphere
-# ==============================================================================
-# Architecture: Spring Boot Microservices (Java 21) + React (Vite / Node 20)
-# ==============================================================================
-
 stages:
   - test
   - build
 
 variables:
-  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN"
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
 
 cache:
   paths:
     - .m2/repository/
     - frontend/node_modules/
 
-# ------------------------------------------------------------------------------
-# Backend Service Builds & Unit Tests
-# ------------------------------------------------------------------------------
 .backend_template: &backend_definition
   image: maven:3.9-eclipse-temurin-21
   stage: test
+  services:
+    - name: mysql:8.0
+      alias: mysql
+  variables:
+    MYSQL_ROOT_PASSWORD: ci_root_password
+    MYSQL_ROOT_HOST: "%"
+    SPRING_DATASOURCE_USERNAME: root
+    SPRING_DATASOURCE_PASSWORD: ci_root_password
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq default-mysql-client
+    - |
+      for i in $(seq 1 60); do
+        if mysqladmin ping -h mysql -uroot -pci_root_password --silent; then
+          echo "MySQL is ready"
+          break
+        fi
+        if [ "$i" -eq 60 ]; then
+          echo "MySQL failed to start"
+          exit 1
+        fi
+        sleep 2
+      done
+    - |
+      mysql -h mysql -uroot -pci_root_password -e "
+      CREATE DATABASE IF NOT EXISTS logisphere_auth_db;
+      CREATE DATABASE IF NOT EXISTS logisphere_delivery_db;
+      CREATE DATABASE IF NOT EXISTS logisphere_inventory_db;
+      CREATE DATABASE IF NOT EXISTS logisphere_order_db;
+      CREATE DATABASE IF NOT EXISTS logisphere_product_db;
+      CREATE DATABASE IF NOT EXISTS logisphere_shipment_db;
+      "
   script:
-    - cd $SERVICE_DIR
+    - cd "$SERVICE_DIR"
     - mvn test -B
-  only:
-    - main
-    - merge_requests
 
 test:eureka-server:
   <<: *backend_definition
@@ -43,35 +62,38 @@ test:auth-service:
   <<: *backend_definition
   variables:
     SERVICE_DIR: backend/auth-service
+    SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/logisphere_auth_db
 
 test:product-service:
   <<: *backend_definition
   variables:
     SERVICE_DIR: backend/product-service
+    SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/logisphere_product_db
 
 test:inventory-service:
   <<: *backend_definition
   variables:
     SERVICE_DIR: backend/inventory-service
+    SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/logisphere_inventory_db
 
 test:order-service:
   <<: *backend_definition
   variables:
     SERVICE_DIR: backend/order-service
+    SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/logisphere_order_db
 
 test:shipment-service:
   <<: *backend_definition
   variables:
     SERVICE_DIR: backend/shipment-service
+    SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/logisphere_shipment_db
 
 test:delivery-service:
   <<: *backend_definition
   variables:
     SERVICE_DIR: backend/delivery-service
+    SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/logisphere_delivery_db
 
-# ------------------------------------------------------------------------------
-# Frontend Lint & Production Build
-# ------------------------------------------------------------------------------
 frontend:build:
   image: node:20-alpine
   stage: build
@@ -84,6 +106,3 @@ frontend:build:
     paths:
       - frontend/dist/
     expire_in: 1 week
-  only:
-    - main
-    - merge_requests
