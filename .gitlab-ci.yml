@@ -25,12 +25,12 @@ cache:
     - apt-get update -qq && apt-get install -y -qq default-mysql-client
     - |
       for i in $(seq 1 60); do
-        if mysqladmin ping -h mysql -uroot -pci_root_password --silent; then
+        if mysqladmin ping -h mysql -uroot -pci_root_password --connect-timeout=3 --silent; then
           echo "MySQL is ready"
           break
         fi
         if [ "$i" -eq 60 ]; then
-          echo "MySQL failed to start"
+          echo "MySQL failed to start"; mysqladmin ping -h mysql -uroot -pci_root_password --connect-timeout=3 2>&1 || true; getent hosts mysql || true
           exit 1
         fi
         sleep 2
