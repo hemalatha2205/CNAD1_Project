@@ -6,6 +6,7 @@ variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
   SPRING_DATASOURCE_USERNAME: root
   SPRING_DATASOURCE_PASSWORD: ci_root_password
+  JWT_SECRET: "LogiSphereCISecretKey2026ForJwtSigningOnly123456"
 
 cache:
   paths:
