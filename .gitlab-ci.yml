@@ -1,6 +1,8 @@
+
 stages:
   - test
   - build
+  - docker
 
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
@@ -33,7 +35,9 @@ cache:
           break
         fi
         if [ "$i" -eq 60 ]; then
-          echo "MySQL failed to start"; mysqladmin ping -h mysql -uroot -pci_root_password --connect-timeout=3 2>&1 || true; getent hosts mysql || true
+          echo "MySQL failed to start"
+          mysqladmin ping -h mysql -uroot -pci_root_password --connect-timeout=3 2>&1 || true
+          getent hosts mysql || true
           exit 1
         fi
         sleep 2
@@ -109,3 +113,55 @@ frontend:build:
     paths:
       - frontend/dist/
     expire_in: 1 week
+
+docker:build-and-push:
+  stage: docker
+  image: docker:29.6.1-cli
+  services:
+    - name: docker:29.6.1-dind
+      alias: docker
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: "1"
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+  before_script:
+    - docker info
+    - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
+  script:
+    - |
+      set -eu
+
+      services="
+      eureka-server
+      api-gateway
+      auth-service
+      product-service
+      inventory-service
+      order-service
+      shipment-service
+      delivery-service
+      frontend
+      "
+
+      for service in $services; do
+        echo "Building $service"
+
+        if [ "$service" = "frontend" ]; then
+          context="frontend"
+        else
+          context="backend/$service"
+        fi
+
+        image="$CI_REGISTRY_IMAGE/$service"
+
+        docker build -t "$image:$CI_COMMIT_SHA" "$context"
+        docker push "$image:$CI_COMMIT_SHA"
+
+        if [ "$CI_COMMIT_BRANCH" = "$CI_DEFAULT_BRANCH" ]; then
+          docker tag "$image:$CI_COMMIT_SHA" "$image:latest"
+          docker push "$image:latest"
+        fi
+      done
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
