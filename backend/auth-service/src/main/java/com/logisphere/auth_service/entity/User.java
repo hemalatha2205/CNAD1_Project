@@ -35,10 +35,11 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "bit(1) default 1")
     private boolean active = true;
 
     public User() {
+        this.active = true;
     }
 
     public User(String fullName, String email, String password, String phone, Role role) {

@@ -61,3 +61,5 @@ kyc-documents/
 **/target/
 **/node_modules/
 **/dist/
+/docker-backup/
+*.backup

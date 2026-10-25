@@ -10,6 +10,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -158,5 +159,35 @@ class AuthServiceDeliveryTest {
         assertNotNull(response);
         assertEquals("dummy_token", response.getToken());
         verify(deliveryClient, times(1)).provisionDeliveryProfile(10L, "Delivery Guy", "delivery@test.com", "123456");
+    }
+
+    @Test
+    void testUserEntity_DefaultsToActiveTrue() {
+        User defaultUser = new User();
+        assertTrue(defaultUser.isActive(), "Default constructor must initialize active to true");
+
+        User paramUser = new User("Test User", "test@example.com", "pass", "123", Role.CUSTOMER);
+        assertTrue(paramUser.isActive(), "Parameterized constructor must initialize active to true");
+    }
+
+    @Test
+    void testRegister_Customer_SetsActiveTrueAndPersists() {
+        when(userRepository.existsByEmailIgnoreCase("newcust@test.com")).thenReturn(false);
+        when(passwordEncoder.encode(VALID_PASSWORD)).thenReturn("encoded_pass");
+
+        User savedUser = new User("New Customer", "newcust@test.com", "encoded_pass", "9988776655", Role.CUSTOMER);
+        savedUser.setId(30L);
+        savedUser.setActive(true);
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+
+        User result = authService.register("New Customer", "newcust@test.com", VALID_PASSWORD, "9988776655", Role.CUSTOMER);
+
+        assertNotNull(result);
+        assertEquals(30L, result.getId());
+        assertTrue(result.isActive());
+
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository, atLeastOnce()).save(captor.capture());
+        assertTrue(captor.getValue().isActive(), "User entity passed to repository must have active=true");
     }
 }
