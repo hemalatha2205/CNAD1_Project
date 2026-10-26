@@ -183,10 +183,10 @@ deploy:staging-validation:
   rules:
     - if: '$DEPLOY_SSH_HOST == null || $DEPLOY_SSH_HOST == ""'
   script:
-    - echo "=== STAGE 4: DEPLOY (STAGING VALIDATION & PRE-FLIGHT) ==="
-    - echo "Validating Docker Compose orchestration manifest..."
-    - docker compose -f docker-compose.yml config --quiet
-    - echo "[PASS] docker-compose.yml syntax and service definitions validated successfully."
+    - 'echo "=== STAGE 4: DEPLOY (STAGING VALIDATION & PRE-FLIGHT) ==="'
+    - 'echo "Validating Docker Compose orchestration manifest..."'
+    - 'docker compose -f docker-compose.yml config --quiet'
+    - 'echo "[PASS] docker-compose.yml syntax and service definitions validated successfully."'
     - |
       echo "Validating published registry image targets for commit $CI_COMMIT_SHA..."
       services="
@@ -243,17 +243,17 @@ deploy:production:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $DEPLOY_SSH_HOST && $DEPLOY_SSH_KEY && $DEPLOY_SSH_USER'
       when: manual
   before_script:
-    - apk add --no-cache openssh-client tar
-    - eval $(ssh-agent -s)
-    - echo "$DEPLOY_SSH_KEY" | tr -d '\r' | ssh-add -
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
-    - ssh-keyscan -H "$DEPLOY_SSH_HOST" >> ~/.ssh/known_hosts || true
+    - 'apk add --no-cache openssh-client tar'
+    - 'eval $(ssh-agent -s)'
+    - 'echo "$DEPLOY_SSH_KEY" | tr -d "\r" | ssh-add -'
+    - 'mkdir -p ~/.ssh'
+    - 'chmod 700 ~/.ssh'
+    - 'ssh-keyscan -H "$DEPLOY_SSH_HOST" >> ~/.ssh/known_hosts || true'
   script:
-    - echo "=== STAGE 4: DEPLOY (REMOTE PRODUCTION) ==="
-    - echo "Deploying commit $CI_COMMIT_SHA to remote host $DEPLOY_SSH_HOST..."
-    - ssh "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" "mkdir -p /opt/logisphere"
-    - scp docker-compose.yml "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST:/opt/logisphere/docker-compose.yml"
+    - 'echo "=== STAGE 4: DEPLOY (REMOTE PRODUCTION) ==="'
+    - 'echo "Deploying commit $CI_COMMIT_SHA to remote host $DEPLOY_SSH_HOST..."'
+    - 'ssh "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" "mkdir -p /opt/logisphere"'
+    - 'scp docker-compose.yml "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST:/opt/logisphere/docker-compose.yml"'
     - |
       ssh "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" "
         set -eu
@@ -263,7 +263,7 @@ deploy:production:
         docker compose up -d --remove-orphans
         docker system prune -f
       "
-    - echo "[PASS] Remote deployment completed successfully."
+    - 'echo "[PASS] Remote deployment completed successfully."'
   environment:
     name: production
     url: $DEPLOY_TARGET_URL
@@ -282,9 +282,9 @@ verify:preflight-smoke-test:
   rules:
     - if: '$DEPLOY_TARGET_URL == null || $DEPLOY_TARGET_URL == ""'
   script:
-    - echo "=== STAGE 5: VERIFY (PRE-FLIGHT SMOKE TEST & HEALTH AUDIT) ==="
-    - echo "Verifying integrity of the deployment bundle..."
-    - tar -tzf logisphere-deploy-bundle.tar.gz
+    - 'echo "=== STAGE 5: VERIFY (PRE-FLIGHT SMOKE TEST & HEALTH AUDIT) ==="'
+    - 'echo "Verifying integrity of the deployment bundle..."'
+    - 'tar -tzf logisphere-deploy-bundle.tar.gz'
     - |
       echo "Verifying microservices architecture topology & service discovery..."
       echo " - Checking Eureka Server (Service Registry) dependencies: OK"
@@ -317,8 +317,8 @@ verify:live-smoke-test:
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $DEPLOY_TARGET_URL != null && $DEPLOY_TARGET_URL != ""'
   script:
-    - echo "=== STAGE 5: VERIFY (LIVE SMOKE TESTS) ==="
-    - echo "Target endpoint: $DEPLOY_TARGET_URL"
+    - 'echo "=== STAGE 5: VERIFY (LIVE SMOKE TESTS) ==="'
+    - 'echo "Target endpoint: $DEPLOY_TARGET_URL"'
     - |
       echo "Waiting for services to become healthy..."
       for i in $(seq 1 30); do
@@ -342,4 +342,4 @@ verify:live-smoke-test:
         echo "[FAIL] Frontend Web Portal returned HTTP $status."
         exit 1
       fi
-    - echo "[PASS] All live smoke tests passed successfully."
+    - 'echo "[PASS] All live smoke tests passed successfully."'
