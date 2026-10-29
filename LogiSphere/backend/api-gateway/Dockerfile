@@ -17,6 +17,8 @@ COPY --from=build --chown=spring:spring /app/target/*.jar app.jar
 
 USER spring:spring
 
-ENV JAVA_TOOL_OPTIONS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError"
+ENV JAVA_TOOL_OPTIONS="-XX:+UseContainerSupport -Xms128m -Xmx280m -XX:MaxMetaspaceSize=128m -Xss256k -XX:+ExitOnOutOfMemoryError"
+
+EXPOSE 8080
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

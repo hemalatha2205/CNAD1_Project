@@ -1,27 +1,39 @@
-﻿services:
-  - type: web
-    name: logisphere-eureka
-    runtime: docker
-    plan: free
-    dockerContext: ./LogiSphere/backend/eureka-server
-    dockerfilePath: ./LogiSphere/backend/eureka-server/Dockerfile
-
+services:
   - type: web
     name: logisphere-auth
     runtime: docker
     plan: free
     dockerContext: ./LogiSphere/backend/auth-service
     dockerfilePath: ./LogiSphere/backend/auth-service/Dockerfile
+    healthCheckPath: /actuator/health
     envVars:
-      - key: SERVER_PORT
-        value: 8082
+      - key: PORT
+        value: "8082"
+      - key: EUREKA_CLIENT_ENABLED
+        value: "false"
       - key: SPRING_DATASOURCE_URL
         sync: false
       - key: SPRING_DATASOURCE_USERNAME
         sync: false
       - key: SPRING_DATASOURCE_PASSWORD
         sync: false
-      - key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
-        sync: false
       - key: JWT_SECRET
         generateValue: true
+
+  - type: web
+    name: logisphere-gateway
+    runtime: docker
+    plan: free
+    dockerContext: ./LogiSphere/backend/api-gateway
+    dockerfilePath: ./LogiSphere/backend/api-gateway/Dockerfile
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: PORT
+        value: "8080"
+      - key: EUREKA_CLIENT_ENABLED
+        value: "false"
+      - key: AUTH_SERVICE_URL
+        fromService:
+          type: web
+          name: logisphere-auth
+          property: url
