@@ -1,0 +1,27 @@
+﻿services:
+  - type: web
+    name: logisphere-eureka
+    runtime: docker
+    plan: free
+    dockerContext: ./LogiSphere/backend/eureka-server
+    dockerfilePath: ./LogiSphere/backend/eureka-server/Dockerfile
+
+  - type: web
+    name: logisphere-auth
+    runtime: docker
+    plan: free
+    dockerContext: ./LogiSphere/backend/auth-service
+    dockerfilePath: ./LogiSphere/backend/auth-service/Dockerfile
+    envVars:
+      - key: SERVER_PORT
+        value: 8082
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      - key: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
