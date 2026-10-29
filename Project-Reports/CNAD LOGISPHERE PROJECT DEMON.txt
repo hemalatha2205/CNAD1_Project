@@ -1,0 +1,143 @@
+CNAD LAB — LOGISPHERE PROJECT DEMONSTRATION
+
+PROJECT TITLE:
+Cloud-Native Logistics and Supply Chain Management Platform (LogiSphere)
+
+1. START DOCKER DESKTOP
+
+Open Docker Desktop and wait until it is running.
+
+Open PowerShell:
+
+cd C:\LogiSphere
+docker compose ps
+
+To view running containers:
+docker ps
+
+To view service logs:
+docker compose logs --tail=50
+
+Explain:
+Docker containerizes applications. Docker Compose manages multiple containers, including the frontend, backend microservices, MySQL, Kafka, and ZooKeeper.
+
+2. SHOW THE FRONTEND
+
+Open in browser:
+http://localhost:5173
+
+Demonstrate:
+- Login and registration
+- Product catalog
+- Supplier functionality
+- Customer order placement
+- Order details and shipment tracking
+- Delivery workflow, if available
+
+Explain:
+The frontend uses React and Vite to provide the user interface.
+
+3. SHOW MICROSERVICES AND EUREKA
+
+Open:
+http://localhost:8761
+
+Explain:
+- Spring Boot is used to build backend microservices.
+- Eureka provides service registration and discovery.
+- Spring Cloud Gateway routes API requests.
+- Each microservice handles a separate business function.
+
+4. SHOW API GATEWAY
+
+Base URL:
+http://localhost:8080
+
+Check products, if the endpoint is available:
+http://localhost:8080/products
+
+Explain:
+The API Gateway provides a common entry point for requests to backend services.
+
+5. SHOW DOCKER CONTAINERS
+
+Command:
+docker compose ps
+
+Optional:
+docker compose images
+
+Explain:
+Docker Compose manages the services, and Docker images package applications with their runtime dependencies.
+
+6. SHOW GITLAB CI/CD PIPELINE
+
+Open:
+https://gitlab.com/hemalatha02205/logisphere/-/pipelines/2988510026
+
+Show the five configured stages:
+1. test
+2. build
+3. docker
+4. deploy
+5. verify
+
+Explain:
+- Test: runs eight backend service test jobs.
+- Build: builds the frontend.
+- Docker: builds and pushes nine container images.
+- Deploy: validates the staging configuration when no remote host is configured.
+- Verify: runs preflight verification.
+
+Latest demonstrated pipeline:
+Commit: d141a4a2
+Status: Passed
+Jobs: 12 passed
+
+Important:
+The successful pipeline demonstrates staging validation and preflight checks, not a live production deployment.
+
+7. SHOW GITLAB CONTAINER REGISTRY
+
+Open the GitLab project and navigate to Deploy > Container Registry, or use the equivalent menu available in the current GitLab interface.
+
+Show the nine service images if listed.
+
+Explain:
+The Container Registry stores images built by the Docker pipeline.
+
+8. IMPORTANT TOOLS USED
+
+- Java 21
+- Spring Boot
+- React and Vite
+- Maven
+- Docker and Docker Compose
+- MySQL
+- Apache Kafka
+- ZooKeeper
+- Eureka
+- Spring Cloud Gateway
+- Git and GitLab
+- GitLab CI/CD
+- GitLab Container Registry
+
+9. USEFUL COMMANDS
+
+cd C:\LogiSphere
+
+docker compose ps
+
+docker ps
+
+docker compose logs --tail=50
+
+docker compose logs --tail=100 api-gateway
+
+docker compose images
+
+git status
+
+10. CONCLUSION
+
+LogiSphere is a cloud-native logistics platform developed using a microservices architecture. It uses Docker for containerization and GitLab CI/CD for automated testing, frontend building, container image publishing, staging validation, and preflight verification.
