@@ -49,6 +49,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
 
                 .requestMatchers(
+                    "/actuator/**",
                     "/auth/register",
                     "/auth/login",
                     "/auth/register/supplier",

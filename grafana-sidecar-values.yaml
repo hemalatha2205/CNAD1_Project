@@ -1,0 +1,5 @@
+grafana:
+  sidecar:
+    image:
+      repository: kiwigrid/k8s-sidecar
+      tag: 1.30.10

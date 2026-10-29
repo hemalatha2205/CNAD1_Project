@@ -14,6 +14,9 @@ public class RestClientConfig {
     @Value("${service.shipment.url}")
     private String shipmentUrl;
 
+    @Value("${service.product.url:http://localhost:8083}")
+    private String productUrl;
+
     @Bean
     public RestClient inventoryRestClient() {
         return RestClient.builder()
@@ -25,6 +28,13 @@ public class RestClientConfig {
     public RestClient shipmentRestClient() {
         return RestClient.builder()
                 .baseUrl(shipmentUrl)
+                .build();
+    }
+
+    @Bean
+    public RestClient productRestClient() {
+        return RestClient.builder()
+                .baseUrl(productUrl)
                 .build();
     }
 }

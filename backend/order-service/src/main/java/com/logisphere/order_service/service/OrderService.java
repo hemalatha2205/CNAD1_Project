@@ -1,10 +1,12 @@
 package com.logisphere.order_service.service;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
 import com.logisphere.order_service.client.InventoryClient;
+import com.logisphere.order_service.client.ProductClient;
 import com.logisphere.order_service.client.ShipmentClient;
 import com.logisphere.order_service.dto.InventoryResponse;
 import com.logisphere.order_service.dto.OrderItemRequest;
@@ -20,17 +22,20 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final InventoryClient inventoryClient;
     private final ShipmentClient shipmentClient;
+    private final ProductClient productClient;
     private final org.springframework.kafka.core.KafkaTemplate<String, String> kafkaTemplate;
 
     public OrderService(
             OrderRepository orderRepository,
             InventoryClient inventoryClient,
             ShipmentClient shipmentClient,
+            ProductClient productClient,
             org.springframework.kafka.core.KafkaTemplate<String, String> kafkaTemplate) {
 
         this.orderRepository = orderRepository;
         this.inventoryClient = inventoryClient;
         this.shipmentClient = shipmentClient;
+        this.productClient = productClient;
         this.kafkaTemplate = kafkaTemplate;
     }
 
@@ -128,6 +133,27 @@ public class OrderService {
             item.setProductId(itemRequest.getProductId());
             item.setQuantity(itemRequest.getQuantity());
             item.setPrice(itemRequest.getPrice());
+
+            String prodName = itemRequest.getProductName();
+            String imgUrl = itemRequest.getImageUrl();
+
+            if (prodName == null || prodName.isBlank()) {
+                try {
+                    Map<String, Object> prod = productClient.getProduct(itemRequest.getProductId());
+                    if (prod != null) {
+                        if (prod.get("name") != null) {
+                            prodName = prod.get("name").toString();
+                        }
+                        if (prod.get("imageUrl") != null) {
+                            imgUrl = prod.get("imageUrl").toString();
+                        }
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+
+            item.setProductName(prodName != null && !prodName.isBlank() ? prodName : ("Product #" + itemRequest.getProductId()));
+            item.setImageUrl(imgUrl);
             item.setOrder(order);
 
             order.getItems().add(item);
@@ -138,7 +164,7 @@ public class OrderService {
                                     BigDecimal.valueOf(
                                             itemRequest.getQuantity()
                                     )
-                            );
+                                );
 
             total = total.add(itemTotal);
         }
@@ -158,26 +184,27 @@ public class OrderService {
                     savedOrder.getId(),
                     savedOrder.getCustomerId(),
                     savedOrder.getCustomerName(),
-                    order.getDeliveryAddress()
+                    savedOrder.getDeliveryAddress()
             );
         } catch (Exception e) {
-            // In a real system, you might not want the entire order to fail if shipment fails,
-            // but the original logic propagated the error. We will keep it but log.
-            throw new RuntimeException("Failed to create shipment synchronously: " + e.getMessage(), e);
+            System.err.println("Could not synchronously create shipment: " + e.getMessage());
         }
 
+        /*
+         * Publish OrderCreatedEvent to Kafka.
+         */
         try {
-            com.logisphere.order_service.event.OrderCreatedEvent event = new com.logisphere.order_service.event.OrderCreatedEvent(
-                java.util.UUID.randomUUID().toString(),
-                savedOrder.getId(),
-                savedOrder.getCustomerId(),
-                java.time.Instant.now().toString()
+            String eventJson = String.format(
+                    "{\"orderId\":%d,\"customerId\":%d,\"customerName\":\"%s\",\"deliveryAddress\":\"%s\",\"status\":\"%s\"}",
+                    savedOrder.getId(),
+                    savedOrder.getCustomerId(),
+                    savedOrder.getCustomerName(),
+                    savedOrder.getDeliveryAddress(),
+                    savedOrder.getStatus().name()
             );
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            kafkaTemplate.send("order.created", String.valueOf(savedOrder.getId()), mapper.writeValueAsString(event));
+            kafkaTemplate.send("order.created", String.valueOf(savedOrder.getId()), eventJson);
         } catch (Exception e) {
-            // Fire-and-forget: do not break the transaction if Kafka is down!
-            System.err.println("Failed to publish OrderCreated event: " + e.getMessage());
+            System.err.println("Failed to publish OrderCreatedEvent to Kafka: " + e.getMessage());
         }
 
         return savedOrder;
@@ -187,9 +214,14 @@ public class OrderService {
 
         return orderRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException(
-                                "Order not found with ID: " + id
-                        )
-                );
+                        new RuntimeException("Order not found with id: " + id));
+    }
+
+    public java.util.List<Order> getOrdersByCustomer(Long customerId) {
+        return orderRepository.findByCustomerId(customerId);
+    }
+
+    public java.util.List<Order> getAllOrders() {
+        return orderRepository.findAll();
     }
 }

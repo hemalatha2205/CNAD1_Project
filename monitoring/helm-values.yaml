@@ -1,0 +1,74 @@
+grafana:
+  persistence:
+    enabled: true
+    storageClassName: standard
+    size: 2Gi
+    accessModes:
+      - ReadWriteOnce
+  sidecar:
+    image:
+      repository: kiwigrid/k8s-sidecar
+      tag: 1.30.10
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      folder: /tmp/dashboards
+      searchNamespace: ALL
+
+prometheus:
+  prometheusSpec:
+    scrapeInterval: 10s
+    additionalScrapeConfigs:
+      - job_name: 'logisphere-microservices'
+        metrics_path: '/actuator/prometheus'
+        scrape_interval: 5s
+        static_configs:
+          - targets:
+              - 'host.minikube.internal:8080'
+            labels:
+              application: 'api-gateway'
+              service: 'api-gateway'
+              instance: 'api-gateway'
+          - targets:
+              - 'host.minikube.internal:8761'
+            labels:
+              application: 'eureka-server'
+              service: 'eureka-server'
+              instance: 'eureka-server'
+          - targets:
+              - 'host.minikube.internal:8082'
+            labels:
+              application: 'auth-service'
+              service: 'auth-service'
+              instance: 'auth-service'
+          - targets:
+              - 'host.minikube.internal:8083'
+            labels:
+              application: 'product-service'
+              service: 'product-service'
+              instance: 'product-service'
+          - targets:
+              - 'host.minikube.internal:8084'
+            labels:
+              application: 'inventory-service'
+              service: 'inventory-service'
+              instance: 'inventory-service'
+          - targets:
+              - 'host.minikube.internal:8085'
+            labels:
+              application: 'order-service'
+              service: 'order-service'
+              instance: 'order-service'
+          - targets:
+              - 'host.minikube.internal:8086'
+            labels:
+              application: 'shipment-service'
+              service: 'shipment-service'
+              instance: 'shipment-service'
+          - targets:
+              - 'host.minikube.internal:8087'
+            labels:
+              application: 'delivery-service'
+              service: 'delivery-service'
+              instance: 'delivery-service'

@@ -87,11 +87,17 @@ export default function OrderDetails() {
               {order.items?.map((item, idx) => (
                 <div key={idx} style={{ display: "flex", justifyContent: "space-between", paddingBottom: "16px", borderBottom: idx !== order.items.length - 1 ? "1px solid #f3f4f6" : "none" }}>
                   <div style={{ display: "flex", gap: "16px" }}>
-                    <div style={{ width: "60px", height: "60px", backgroundColor: "#f9fafb", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #f3f4f6" }}>
-                      <Package size={24} color="#d1d5db" />
+                    <div style={{ width: "60px", height: "60px", backgroundColor: "#f9fafb", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #f3f4f6", overflow: "hidden" }}>
+                      {item.imageUrl ? (
+                        <img src={item.imageUrl} alt={item.productName || "Product"} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : (
+                        <Package size={24} color="#d1d5db" />
+                      )}
                     </div>
                     <div>
-                      <div style={{ fontWeight: 600, color: "#111827", marginBottom: "4px" }}>Product ID: {item.productId}</div>
+                      <div style={{ fontWeight: 600, color: "#111827", marginBottom: "4px" }}>
+                        {item.productName || `Product #${item.productId}`}
+                      </div>
                       <div style={{ fontSize: "13px", color: "#6b7280" }}>Qty: {item.quantity} &times; ${item.price?.toFixed(2)}</div>
                     </div>
                   </div>

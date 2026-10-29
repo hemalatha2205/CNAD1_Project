@@ -57,6 +57,8 @@ export default function Checkout() {
         deliveryAddress: fullAddress,
         items: cartItems.map(item => ({
           productId: item.product.id,
+          productName: item.product.name,
+          imageUrl: item.product.imageUrl || (item.product.images && item.product.images[0]) || "",
           quantity: item.quantity,
           price: item.product.price
         }))

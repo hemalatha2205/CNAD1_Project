@@ -90,8 +90,12 @@ export default function MyOrders() {
                 className="order-card"
               >
                 <div style={{ display: "flex", gap: "24px", alignItems: "center" }}>
-                  <div style={{ width: "64px", height: "64px", backgroundColor: "#f9fafb", borderRadius: "12px", border: "1px solid #f3f4f6", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Package size={32} color="#9ca3af" />
+                  <div style={{ width: "64px", height: "64px", backgroundColor: "#f9fafb", borderRadius: "12px", border: "1px solid #f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+                    {order.items && order.items[0]?.imageUrl ? (
+                      <img src={order.items[0].imageUrl} alt="Order item" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : (
+                      <Package size={32} color="#9ca3af" />
+                    )}
                   </div>
 
                   <div>
@@ -106,9 +110,14 @@ export default function MyOrders() {
                         {order.status}
                       </span>
                     </div>
-                    <div style={{ color: "#6b7280", fontSize: "14px" }}>
+                    <div style={{ color: "#6b7280", fontSize: "14px", marginBottom: "4px" }}>
                       {order.items?.length || 0} items &bull; Total: <strong style={{ color: "#111827" }}>${order.totalAmount?.toFixed(2)}</strong>
                     </div>
+                    {order.items && order.items.length > 0 && (
+                      <div style={{ color: "#4b5563", fontSize: "13px", maxWidth: "500px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {order.items.map(i => i.productName || `Product #${i.productId}`).join(", ")}
+                      </div>
+                    )}
                   </div>
                 </div>
 

@@ -6,6 +6,10 @@ public class OrderItemRequest {
 
     private Long productId;
 
+    private String productName;
+
+    private String imageUrl;
+
     private Integer quantity;
 
     private BigDecimal price;
@@ -19,6 +23,22 @@ public class OrderItemRequest {
 
     public void setProductId(Long productId) {
         this.productId = productId;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public Integer getQuantity() {

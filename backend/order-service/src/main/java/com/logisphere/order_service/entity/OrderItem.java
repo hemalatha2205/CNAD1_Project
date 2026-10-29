@@ -25,6 +25,12 @@ public class OrderItem {
     @Column(nullable = false)
     private Long productId;
 
+    @Column(name = "product_name")
+    private String productName;
+
+    @Column(name = "image_url", length = 1000)
+    private String imageUrl;
+
     @Column(nullable = false)
     private Integer quantity;
 
@@ -49,6 +55,22 @@ public class OrderItem {
 
     public void setProductId(Long productId) {
         this.productId = productId;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public Integer getQuantity() {

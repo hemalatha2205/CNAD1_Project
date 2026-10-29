@@ -15,12 +15,15 @@ public class InventoryClient {
     }
 
     public InventoryResponse getInventory(Long productId) {
-
-        return inventoryRestClient
-                .get()
-                .uri("/inventory/{productId}", productId)
-                .retrieve()
-                .body(InventoryResponse.class);
+        try {
+            return inventoryRestClient
+                    .get()
+                    .uri("/inventory/{productId}", productId)
+                    .retrieve()
+                    .body(InventoryResponse.class);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public InventoryResponse removeStock(
