@@ -1,4 +1,4 @@
-services:
+﻿services:
   - type: web
     name: logisphere-auth
     runtime: docker
@@ -12,28 +12,10 @@ services:
       - key: EUREKA_CLIENT_ENABLED
         value: "false"
       - key: SPRING_DATASOURCE_URL
-        sync: false
+        value: jdbc:h2:mem:logisphere_auth_db;DB_CLOSE_DELAY=-1;MODE=MySQL
       - key: SPRING_DATASOURCE_USERNAME
-        sync: false
+        value: sa
       - key: SPRING_DATASOURCE_PASSWORD
-        sync: false
+        value: sa
       - key: JWT_SECRET
         generateValue: true
-
-  - type: web
-    name: logisphere-gateway
-    runtime: docker
-    plan: free
-    dockerContext: ./LogiSphere/backend/api-gateway
-    dockerfilePath: ./LogiSphere/backend/api-gateway/Dockerfile
-    healthCheckPath: /actuator/health
-    envVars:
-      - key: PORT
-        value: "8080"
-      - key: EUREKA_CLIENT_ENABLED
-        value: "false"
-      - key: AUTH_SERVICE_URL
-        fromService:
-          type: web
-          name: logisphere-auth
-          property: url
