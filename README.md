@@ -3,21 +3,6 @@
 
 **Transforming logistics operations through intelligent architecture, seamless integration, and scalable microservices.**
 
-<p align="center">
-  ![React](https://img.shields.io/badge/Frontend-React.js-61DAFB?style=for-the-badge&logo=react&logoColor=black)
-  ![Java](https://img.shields.io/badge/Backend-Java-orange?style=for-the-badge&logo=openjdk&logoColor=white)
-  ![Spring Boot](https://img.shields.io/badge/Framework-Spring_Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
-  ![MySQL](https://img.shields.io/badge/Database-MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
-</p>
-
-<p align="center">
-  ![Architecture](https://img.shields.io/badge/Architecture-Microservices-blueviolet?style=flat-square)
-  ![Kafka](https://img.shields.io/badge/Messaging-Apache_Kafka-black?style=flat-square&logo=apachekafka)
-  ![Docker](https://img.shields.io/badge/Containerization-Docker-2496ED?style=flat-square&logo=docker)
-  ![JWT](https://img.shields.io/badge/Security-JWT-black?style=flat-square&logo=jsonwebtokens)
-</p>
-
----
 
 ## About LogiSphere
 
@@ -52,40 +37,6 @@ To create a unified digital logistics ecosystem where different stakeholders and
 ## System Architecture
 
 LogiSphere follows a **Microservices-based Service-Oriented Architecture**, separating business capabilities into independent services.
-
-### Architecture Overview
-
-```mermaid
-flowchart TB
-    A["React.js Frontend"] --> B["Spring Cloud API Gateway"]
-    B --> C["Netflix Eureka Server"]
-
-    B --> D["Authentication Service"]
-    B --> E["Product Service"]
-    B --> F["Inventory Service"]
-    B --> G["Order Service"]
-    B --> H["Shipment Service"]
-    B --> I["Delivery Service"]
-
-    C -. "Service Registration & Discovery" .-> D
-    C -. "Service Registration & Discovery" .-> E
-    C -. "Service Registration & Discovery" .-> F
-    C -. "Service Registration & Discovery" .-> G
-    C -. "Service Registration & Discovery" .-> H
-    C -. "Service Registration & Discovery" .-> I
-
-    D --> J[("MySQL Databases")]
-    E --> J
-    F --> J
-    G --> J
-    H --> J
-    I --> J
-
-    G <--> K["Apache Kafka"]
-    H <--> K
-    I <--> K
-    K --- L["ZooKeeper"]
-```
 
 ### Architectural Components
 
